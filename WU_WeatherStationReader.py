@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+from datetime import datetime as dt
+
 from bs4 import BeautifulSoup
 import re
 from selenium import webdriver
@@ -11,7 +14,7 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
-from datetime import datetime as dt
+
 import datetime
 import time
 import pytz
@@ -19,13 +22,20 @@ import pytz
 east = pytz.timezone("US/Eastern")
 
 # to install ChromeDriverManager() on first use
-# chrome_options = Options()
 # webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
 from collections import OrderedDict
 
 Stations = OrderedDict()  # First Uppercase since this will be the master dict of dfs
-stations = ["KMIGLENA6", "KMIMAPLE4", "KMIMAPLE5", "KMILELAN9", "KMIGLENA5"]
+stations = [
+    "KMIMAPLE5",
+    "KMIGLENA6",
+    "KMIMAPLE4",
+    "KMILELAN9",
+    "KMIGLENA5",
+    "KMILAKEL14",
+    "KMILELAN11",
+]
 
 
 ################ FUNCTIONS ############################################################
@@ -50,15 +60,20 @@ class StationReader:
         return dfs[3]
 
 
-# tz aware:
+# tz aware
 # start = datetime.datetime(2020,6,28, tzinfo=east).date()
 # end = dt.now(tz=east).date()
 
-# NOT tz aware:
-start = datetime.datetime(2020, 6, 28).date()
+
+# NOT tz away (yet)
+# start = datetime.datetime(2020,6,27).date()
 end = dt.now().date()
 
-num_of_days = int((end - start).days)
+# num_of_days = int((end-start).days)
+num_of_days = 31
+start = end - datetime.timedelta(
+    days=(num_of_days - 1)
+)  # b/c for-loop counts from zero
 date_list = [(start + datetime.timedelta(days=x)) for x in range(num_of_days)]
 
 # Load the scraper bot
@@ -67,7 +82,7 @@ bot = StationReader()
 for station in stations:
 
     # initialize the dataset
-    data = bot.getTableData(station=station, date="2020-06-27")
+    data = bot.getTableData(station=station, date=start)
     data.drop([0], inplace=True)
     data["Date"] = "2020-06-27"
     data["timestamp"] = pd.to_datetime(
@@ -92,6 +107,6 @@ for station in stations:
         except Exception:
             pass
 
-    data.to_csv(f"ws_{station}_{data.index[-1].date()}.csv")
+    data.to_csv(f"DATA/ws_{station}_{data.index[-1].date()}.csv")
     Stations[station] = data
-    data.tail()
+    data.head()
